@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salesforce Assistant</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <div class="logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" fill="currentColor"/>
+          </svg>
+        </div>
+        <h1>Salesforce Assistant</h1>
+        <button id="clearHistoryBtn" class="settings-btn" title="Clear chat history">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" fill="currentColor"/>
+          </svg>
+        </button>
+        <button id="settingsBtn" class="settings-btn" title="Settings">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M19.14 12.94c.04-.31.06-.63.06-.94 0-.31-.02-.63-.06-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Settings Panel -->
+    <div id="settingsPanel" class="settings-panel hidden">
+      <div class="settings-content">
+        <h2>Settings</h2>
+        <div class="form-group">
+          <label for="apiKey">Claude API Key</label>
+          <input type="password" id="apiKey" placeholder="Enter your Anthropic API key">
+          <p class="help-text">Get your API key from <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a></p>
+        </div>
+        <div class="form-group">
+          <label for="customInstructions">Company Instructions (Optional)</label>
+          <textarea id="customInstructions" rows="6" placeholder="Paste your company's Salesforce instructions, processes, or custom field descriptions here..."></textarea>
+          <p class="help-text">The chatbot will use this knowledge when answering your questions</p>
+        </div>
+        <div class="settings-actions">
+          <button id="saveSettings" class="btn btn-primary">Save</button>
+          <button id="cancelSettings" class="btn btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat Container -->
+    <div id="chatContainer" class="chat-container">
+      <!-- Welcome Message -->
+      <div id="welcomeMessage" class="welcome-message">
+        <div class="welcome-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H5.17L4 17.17V4h16v12z" fill="currentColor"/>
+            <path d="M12 15c.55 0 1-.45 1-1s-.45-1-1-1-1 .45-1 1 .45 1 1 1zm1-4V6h-2v5h2z" fill="currentColor"/>
+          </svg>
+        </div>
+        <h2>Hi! I'm your Salesforce Helper</h2>
+        <p>I give simple, step-by-step answers. Just ask me things like:</p>
+        <ul>
+          <li>"How do I add a new contact?"</li>
+          <li>"Where do I log a call?"</li>
+          <li>"How do I update an opportunity?"</li>
+          <li>"How do I find my leads?"</li>
+          <li>"How do I run a report?"</li>
+        </ul>
+      </div>
+
+      <!-- Messages will be appended here -->
+      <div id="messages" class="messages"></div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="input-area">
+      <div class="input-container">
+        <textarea
+          id="userInput"
+          placeholder="Ask me about Salesforce..."
+          rows="1"
+          autofocus
+        ></textarea>
+        <button id="sendBtn" class="send-btn" title="Send message">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" fill="currentColor"/>
+          </svg>
+        </button>
+      </div>
+      <p class="powered-by">Powered by Claude AI</p>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
