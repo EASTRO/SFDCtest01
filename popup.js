@@ -21,15 +21,24 @@ You help with everyday sales tasks like:
 - Using dashboards
 - Basic navigation in Salesforce
 
+CPQ (Configure, Price, Quote) - The user has CPQ enabled. You can help with:
+- Creating and editing quotes
+- Adding products to quotes
+- Applying discounts
+- Generating quote documents
+- Sending quotes to customers
+- Understanding quote statuses
+- Product bundles and options
+
 Example response style:
-"To add a new contact: 1) Click the + icon at the top, 2) Select 'Contact', 3) Fill in the name and email, 4) Click Save."
+"To create a quote: 1) Open your Opportunity, 2) Click 'New Quote' button, 3) Fill in the quote name, 4) Click Save, then add products."
 
 Be encouraging and patient. If you don't understand what they need, ask a simple clarifying question.`;
 
 // DOM Elements
 let settingsBtn, settingsPanel, saveSettingsBtn, cancelSettingsBtn;
 let apiKeyInput, chatContainer, messagesContainer, welcomeMessage;
-let userInput, sendBtn;
+let userInput, sendBtn, clearHistoryBtn;
 
 // State
 let conversationHistory = [];
@@ -51,15 +60,18 @@ function init() {
   welcomeMessage = document.getElementById('welcomeMessage');
   userInput = document.getElementById('userInput');
   sendBtn = document.getElementById('sendBtn');
+  clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-  // Load saved API key
+  // Load saved API key and chat history
   loadApiKey();
+  loadChatHistory();
 
   // Event listeners
   settingsBtn.addEventListener('click', openSettings);
   saveSettingsBtn.addEventListener('click', saveSettings);
   cancelSettingsBtn.addEventListener('click', closeSettings);
   sendBtn.addEventListener('click', sendMessage);
+  clearHistoryBtn.addEventListener('click', clearChatHistory);
   userInput.addEventListener('keydown', handleKeyDown);
   userInput.addEventListener('input', autoResizeTextarea);
 
@@ -91,6 +103,49 @@ async function saveApiKey(key) {
   } catch (error) {
     console.error('Error saving API key:', error);
     throw error;
+  }
+}
+
+// Chat History Management
+async function loadChatHistory() {
+  try {
+    const result = await chrome.storage.local.get(['chatHistory']);
+    if (result.chatHistory && result.chatHistory.length > 0) {
+      conversationHistory = result.chatHistory;
+
+      // Hide welcome message and display previous messages
+      if (welcomeMessage) {
+        welcomeMessage.classList.add('hidden');
+      }
+
+      // Render all previous messages
+      conversationHistory.forEach(msg => {
+        addMessageToUI(msg.role, msg.content);
+      });
+    }
+  } catch (error) {
+    console.error('Error loading chat history:', error);
+  }
+}
+
+async function saveChatHistory() {
+  try {
+    await chrome.storage.local.set({ chatHistory: conversationHistory });
+  } catch (error) {
+    console.error('Error saving chat history:', error);
+  }
+}
+
+async function clearChatHistory() {
+  try {
+    conversationHistory = [];
+    await chrome.storage.local.set({ chatHistory: [] });
+    messagesContainer.innerHTML = '';
+    if (welcomeMessage) {
+      welcomeMessage.classList.remove('hidden');
+    }
+  } catch (error) {
+    console.error('Error clearing chat history:', error);
   }
 }
 
@@ -185,6 +240,9 @@ async function sendMessage() {
       role: 'assistant',
       content: response
     });
+
+    // Save chat history
+    await saveChatHistory();
 
   } catch (error) {
     // Remove typing indicator
