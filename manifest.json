@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "A Claude-powered AI chatbot that helps you learn and use Salesforce effectively",
   "permissions": [
-    "storage"
+    "storage",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://api.anthropic.com/*"
