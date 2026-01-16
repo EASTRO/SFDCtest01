@@ -37,13 +37,14 @@ Be encouraging and patient. If you don't understand what they need, ask a simple
 
 // DOM Elements
 let settingsBtn, settingsPanel, saveSettingsBtn, cancelSettingsBtn;
-let apiKeyInput, chatContainer, messagesContainer, welcomeMessage;
+let apiKeyInput, customInstructionsInput, chatContainer, messagesContainer, welcomeMessage;
 let userInput, sendBtn, clearHistoryBtn;
 
 // State
 let conversationHistory = [];
 let isLoading = false;
 let apiKey = '';
+let customInstructions = '';
 
 // Initialize
 document.addEventListener('DOMContentLoaded', init);
@@ -55,6 +56,7 @@ function init() {
   saveSettingsBtn = document.getElementById('saveSettings');
   cancelSettingsBtn = document.getElementById('cancelSettings');
   apiKeyInput = document.getElementById('apiKey');
+  customInstructionsInput = document.getElementById('customInstructions');
   chatContainer = document.getElementById('chatContainer');
   messagesContainer = document.getElementById('messages');
   welcomeMessage = document.getElementById('welcomeMessage');
@@ -62,8 +64,8 @@ function init() {
   sendBtn = document.getElementById('sendBtn');
   clearHistoryBtn = document.getElementById('clearHistoryBtn');
 
-  // Load saved API key and chat history
-  loadApiKey();
+  // Load saved settings and chat history
+  loadSettings();
   loadChatHistory();
 
   // Event listeners
@@ -83,26 +85,20 @@ function init() {
   });
 }
 
-// API Key Management
-async function loadApiKey() {
+// Settings Management
+async function loadSettings() {
   try {
-    const result = await chrome.storage.local.get(['anthropicApiKey']);
+    const result = await chrome.storage.local.get(['anthropicApiKey', 'customInstructions']);
     if (result.anthropicApiKey) {
       apiKey = result.anthropicApiKey;
       apiKeyInput.value = apiKey;
     }
+    if (result.customInstructions) {
+      customInstructions = result.customInstructions;
+      customInstructionsInput.value = customInstructions;
+    }
   } catch (error) {
-    console.error('Error loading API key:', error);
-  }
-}
-
-async function saveApiKey(key) {
-  try {
-    await chrome.storage.local.set({ anthropicApiKey: key });
-    apiKey = key;
-  } catch (error) {
-    console.error('Error saving API key:', error);
-    throw error;
+    console.error('Error loading settings:', error);
   }
 }
 
@@ -158,10 +154,12 @@ function openSettings() {
 function closeSettings() {
   settingsPanel.classList.add('hidden');
   apiKeyInput.value = apiKey; // Reset to saved value
+  customInstructionsInput.value = customInstructions; // Reset to saved value
 }
 
 async function saveSettings() {
   const newApiKey = apiKeyInput.value.trim();
+  const newCustomInstructions = customInstructionsInput.value.trim();
 
   if (!newApiKey) {
     showError('Please enter an API key');
@@ -169,10 +167,15 @@ async function saveSettings() {
   }
 
   try {
-    await saveApiKey(newApiKey);
+    await chrome.storage.local.set({
+      anthropicApiKey: newApiKey,
+      customInstructions: newCustomInstructions
+    });
+    apiKey = newApiKey;
+    customInstructions = newCustomInstructions;
     closeSettings();
   } catch (error) {
-    showError('Failed to save API key');
+    showError('Failed to save settings');
   }
 }
 
@@ -261,6 +264,12 @@ async function sendMessage() {
 }
 
 async function callClaudeAPI(userMessage) {
+  // Build system prompt with custom instructions if provided
+  let fullSystemPrompt = SYSTEM_PROMPT;
+  if (customInstructions) {
+    fullSystemPrompt += `\n\n--- COMPANY-SPECIFIC INSTRUCTIONS ---\nThe following are specific instructions and processes for this company's Salesforce instance. Use this information when answering questions:\n\n${customInstructions}`;
+  }
+
   const response = await fetch(ANTHROPIC_API_URL, {
     method: 'POST',
     headers: {
@@ -272,7 +281,7 @@ async function callClaudeAPI(userMessage) {
     body: JSON.stringify({
       model: MODEL,
       max_tokens: 2048,
-      system: SYSTEM_PROMPT,
+      system: fullSystemPrompt,
       messages: conversationHistory
     })
   });

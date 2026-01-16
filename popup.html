@@ -39,6 +39,11 @@
           <input type="password" id="apiKey" placeholder="Enter your Anthropic API key">
           <p class="help-text">Get your API key from <a href="https://console.anthropic.com/" target="_blank">console.anthropic.com</a></p>
         </div>
+        <div class="form-group">
+          <label for="customInstructions">Company Instructions (Optional)</label>
+          <textarea id="customInstructions" rows="6" placeholder="Paste your company's Salesforce instructions, processes, or custom field descriptions here..."></textarea>
+          <p class="help-text">The chatbot will use this knowledge when answering your questions</p>
+        </div>
         <div class="settings-actions">
           <button id="saveSettings" class="btn btn-primary">Save</button>
           <button id="cancelSettings" class="btn btn-secondary">Cancel</button>
